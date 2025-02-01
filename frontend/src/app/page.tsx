@@ -1,10 +1,9 @@
-import { Button } from "@/components/ui/button"
+import { TranscriptionContainer } from "@/features/transcription/components/container/TranscriptionContainer";
 
 export default function Home() {
   return (
     <main>
-      <p className="text-3xl font-bold underline">Hello, world!</p>
-      <Button>Click me</Button>
+      <TranscriptionContainer />
     </main>
   );
 }
