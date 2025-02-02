@@ -1,9 +1,9 @@
-import { TranscriptionContainer } from "@/features/transcription/components/container/TranscriptionContainer";
-
 export default function Home() {
   return (
     <main>
-      <TranscriptionContainer />
+      <h1 className="text-3xl font-bold underline">
+      Hello world!
+    </h1>
     </main>
   );
 }
