@@ -40,6 +40,12 @@ cd frontend
 yarn install
 ```
 
+環境変数の設定:
+```bash
+cp .env.example .env
+```
+必要に応じて `.env` ファイルの内容を編集してください。
+
 ### 3. バックエンドのセットアップ
 
 1. Google Cloud の設定:

@@ -164,3 +164,4 @@ cython_debug/
 mysql
 
 google-cloud-key.json
+.env
