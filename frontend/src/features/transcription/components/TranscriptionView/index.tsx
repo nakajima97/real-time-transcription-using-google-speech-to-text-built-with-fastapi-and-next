@@ -56,6 +56,15 @@ export const TranscriptionView = ({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
+            {recognitionHistory.length > 0 ? (
+              [...recognitionHistory].reverse().map((text, index) => (
+                <p key={index}>{text}</p>
+              ))
+            ) : (
+              !currentRecognition && (
+                <p className="text-gray-400">録音を開始すると、ここに文字起こしが表示されます。</p>
+              )
+            )}
             {isListening && currentRecognition && (
               <motion.p
                 initial={{ opacity: 0 }}
@@ -64,13 +73,6 @@ export const TranscriptionView = ({
               >
                 {currentRecognition}
               </motion.p>
-            )}
-            {recognitionHistory.length > 0 ? (
-              recognitionHistory.map((text, index) => (
-                <p key={index}>{text}</p>
-              ))
-            ) : (
-              <p className="text-gray-400">録音を開始すると、ここに文字起こしが表示されます。</p>
             )}
           </motion.div>
         </CardContent>
