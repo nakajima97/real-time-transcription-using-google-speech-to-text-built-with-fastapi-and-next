@@ -4,13 +4,14 @@ import { useTranscription } from "../../hooks/useTranscription"
 import { TranscriptionView } from "../TranscriptionView"
 
 export const TranscriptionContainer = () => {
-  const { isListening, transcript, toggleListening } = useTranscription()
+  const { isListening, handleToggleListening, currentRecognition, recognitionHistory } = useTranscription()
 
   return (
     <TranscriptionView
       isListening={isListening}
-      transcript={transcript}
-      onToggleListening={toggleListening}
+      currentRecognition={currentRecognition}
+      recognitionHistory={recognitionHistory}
+      onToggleListening={handleToggleListening}
     />
   )
 }
