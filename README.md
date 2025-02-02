@@ -6,8 +6,6 @@ Google Cloud Speech-to-Text APIを使用したリアルタイム文字起こし�
 
 - リアルタイムでの音声認識
 - 日本語対応
-- モダンなUI/UX
-- WebSocketを使用したリアルタイム通信
 
 ## 必要要件
 
