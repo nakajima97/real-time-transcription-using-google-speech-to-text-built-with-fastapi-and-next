@@ -111,8 +111,3 @@ docker compose logs -f api
 ```bash
 docker compose down
 ```
-
-## ライセンス
-
-このプロジェクトは BSD ライセンスの下で公開されています。
-詳細は [LICENSE](LICENSE) ファイルを参照してください。
