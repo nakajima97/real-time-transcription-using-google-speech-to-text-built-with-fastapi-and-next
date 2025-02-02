@@ -1,4 +1,4 @@
-import { TranscriptionContainer } from "@/features/transcription/components/container/TranscriptionContainer";
+import { TranscriptionContainer } from "@/features/transcription/components/TranscriptionContainer.tsx";
 
 export default function Home() {
   return (

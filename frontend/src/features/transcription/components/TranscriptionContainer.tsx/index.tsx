@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranscription } from "../../hooks/useTranscription"
-import { TranscriptionView } from "../presentation/TranscriptionView"
+import { TranscriptionView } from "../TranscriptionView"
 
 export const TranscriptionContainer = () => {
   const { isListening, transcript, toggleListening } = useTranscription()
