@@ -2,6 +2,9 @@
 
 Google Cloud Speech-to-Text APIを使用したリアルタイム文字起こしアプリケーションです。FastAPIとNext.jsを使用して構築されています。
 
+以下ブログ記事のサンプルコードとして作成したリポジトリです。  
+https://blog.back-of-flyers.com/archives/183
+
 ## 機能
 
 - リアルタイムでの音声認識
