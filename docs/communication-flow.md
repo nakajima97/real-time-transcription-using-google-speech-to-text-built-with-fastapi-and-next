@@ -5,6 +5,8 @@ sequenceDiagram
     participant Backend
     participant GoogleSTT
 
+    Note over Frontend,Backend: Socket.IOによるリアルタイム双方向通信
+
     Browser->>Frontend: 録音開始ボタンクリック
     Frontend->>Backend: 音声認識セッション開始要求
     Backend->>GoogleSTT: ストリーミング認識セッション開始
