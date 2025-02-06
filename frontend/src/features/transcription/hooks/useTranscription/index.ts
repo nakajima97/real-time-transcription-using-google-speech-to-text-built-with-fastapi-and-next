@@ -30,8 +30,6 @@ export const useTranscription = () => {
       setConnection(socket);
     });
 
-    socket.emit('send_message', 'hello world');
-
     // Start recording
     socket.emit('start_google_cloud_stream');
 
@@ -42,7 +40,7 @@ export const useTranscription = () => {
 
   const disconnect = () => {
     if (!connection) return;
-    connection?.emit('end_google_cloud_stream');
+    connection?.emit('stop_google_cloud_stream');
     connection?.disconnect();
     processorRef.current?.disconnect();
     audioInputRef.current?.disconnect();
