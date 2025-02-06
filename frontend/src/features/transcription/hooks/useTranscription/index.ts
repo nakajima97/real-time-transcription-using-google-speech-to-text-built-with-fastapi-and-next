@@ -25,14 +25,15 @@ export const useTranscription = () => {
 
   const connect = () => {
     connection?.disconnect();
-    const socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
+    const socket = io(
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+    );
     socket.on('connect', () => {
       setConnection(socket);
     });
 
-    socket.emit('send_message', 'hello world');
-
-    socket.emit('startGoogleCloudStream');
+    // Start recording
+    socket.emit('start_google_cloud_stream');
 
     socket.on('receive_audio_text', (data: WordRecognized) => {
       speechRecognized(data);
@@ -41,7 +42,7 @@ export const useTranscription = () => {
 
   const disconnect = () => {
     if (!connection) return;
-    connection?.emit('endGoogleCloudStream');
+    connection?.emit('stop_google_cloud_stream');
     connection?.disconnect();
     processorRef.current?.disconnect();
     audioInputRef.current?.disconnect();

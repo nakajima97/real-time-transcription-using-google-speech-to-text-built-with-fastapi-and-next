@@ -25,8 +25,8 @@ async def disconnect(sid):
         del stream_handlers[sid]
 
 
-@sio.on("startGoogleCloudStream")
-async def start_recognition(sid):
+@sio.on("start_google_cloud_stream")
+async def start_google_cloud_stream(sid):
     """音声認識開始イベント"""
     print(f"Starting recognition for {sid}")
     if sid not in stream_handlers:
@@ -34,8 +34,8 @@ async def start_recognition(sid):
     await stream_handlers[sid].handle_queue()
 
 
-@sio.on("stopGoogleCloudStream")
-async def stop_recognition(sid):
+@sio.on("stop_google_cloud_stream")
+async def stop_google_cloud_stream(sid):
     """音声認識終了イベント"""
     print(f"Stopping recognition for {sid}")
     if sid in stream_handlers:
