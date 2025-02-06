@@ -32,7 +32,8 @@ export const useTranscription = () => {
 
     socket.emit('send_message', 'hello world');
 
-    socket.emit('startGoogleCloudStream');
+    // Start recording
+    socket.emit('start_google_cloud_stream');
 
     socket.on('receive_audio_text', (data: WordRecognized) => {
       speechRecognized(data);
@@ -41,7 +42,7 @@ export const useTranscription = () => {
 
   const disconnect = () => {
     if (!connection) return;
-    connection?.emit('endGoogleCloudStream');
+    connection?.emit('end_google_cloud_stream');
     connection?.disconnect();
     processorRef.current?.disconnect();
     audioInputRef.current?.disconnect();
