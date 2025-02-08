@@ -128,7 +128,7 @@ class AudioStreamHandler:
                         return
 
         except Exception as e:
-            print(f"Error in handle_queue: {e}")
+            print(f"Error in start_stream: {e}")
             if self._stream_id == current_stream_id:  # 現在のストリームでエラーが発生した場合のみ再起動
                 await self.cleanup_stream()
 
@@ -158,7 +158,7 @@ class AudioStreamHandler:
         """新しいストリーミングセッションを作成する"""
         self._is_streaming = True
         await self.initialize_client()
-        asyncio.create_task(self.handle_queue())
+        asyncio.create_task(self.start_stream())
 
     async def stop_stream(self):
         """ストリーミングを停止する"""
