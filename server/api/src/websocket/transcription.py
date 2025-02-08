@@ -165,6 +165,5 @@ class AudioStreamHandler:
         print(f"Stopping stream for {self.sid}")
         self._is_streaming = False
         self._cleanup_event.clear()  # イベントをリセット
-        await self.queue.put({"audio": b""})
         await self.cleanup_stream()
         await self._cleanup_event.wait()  # クリーンアップの完了を待機
