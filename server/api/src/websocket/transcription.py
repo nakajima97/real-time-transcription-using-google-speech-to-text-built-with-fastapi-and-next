@@ -61,8 +61,6 @@ class AudioStreamHandler:
         self.sid = sid
         self.queue = asyncio.Queue()
         self._is_streaming = False
-        self.last_message_final = False
-        self._current_task = None
         self._stream_id = 0  # ストリームを識別するためのID
         self._cleanup_event = asyncio.Event()  # クリーンアップの完了を追跡
 
@@ -153,10 +151,7 @@ class AudioStreamHandler:
             except asyncio.QueueEmpty:
                 break
 
-        if hasattr(self, 'client') and self.client is not None:
-            self.client = None
-        
-        self.last_message_final = False
+        self.client = None
         self._cleanup_event.set()  # クリーンアップ完了を通知
 
     async def create_new_stream(self):
