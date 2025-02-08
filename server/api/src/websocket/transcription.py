@@ -66,6 +66,7 @@ class AudioStreamHandler:
         self.last_message_final = False
         self._current_task = None
         self._stream_id = 0  # ストリームを識別するためのID
+        self._cleanup_event = asyncio.Event()  # クリーンアップの完了を追跡
         print(f"[INIT] Created new AudioStreamHandler for session {sid}")
 
     async def initialize_client(self):
@@ -153,11 +154,14 @@ class AudioStreamHandler:
     async def restart_stream(self):
         """現在のストリームを閉じて新しいストリームを開始する"""
         print(f"[RESTART] Beginning stream restart for session {self.sid}")
-        self._stream_id += 1  # ストリームIDをインクリメント
+        self._stream_id += 1
+        self._cleanup_event.clear()  # イベントをリセット
         await self.cleanup_stream()
+        
         if self._is_streaming:
-            print(f"[RESTART] Stream is still active, creating new stream for session {self.sid}")
-            await asyncio.sleep(0.1)
+            print(f"[RESTART] Stream is still active, waiting for cleanup to complete for session {self.sid}")
+            await self._cleanup_event.wait()  # クリーンアップの完了を待機
+            print(f"[RESTART] Cleanup confirmed, creating new stream for session {self.sid}")
             await self.create_new_stream()
 
     async def cleanup_stream(self):
@@ -175,7 +179,9 @@ class AudioStreamHandler:
         if hasattr(self, 'client') and self.client is not None:
             print(f"[CLEANUP] Closing client for session {self.sid}")
             self.client = None
+        
         self.last_message_final = False
+        self._cleanup_event.set()  # クリーンアップ完了を通知
         print(f"[CLEANUP] Cleanup completed for session {self.sid}")
 
     async def create_new_stream(self):
@@ -190,6 +196,8 @@ class AudioStreamHandler:
         """ストリーミングを停止する"""
         print(f"[STOP] Stopping stream for session {self.sid}")
         self._is_streaming = False
+        self._cleanup_event.clear()  # イベントをリセット
         await self.queue.put({"audio": b""})
         await self.cleanup_stream()
+        await self._cleanup_event.wait()  # クリーンアップの完了を待機
         print(f"[STOP] Stream stopped for session {self.sid}")
