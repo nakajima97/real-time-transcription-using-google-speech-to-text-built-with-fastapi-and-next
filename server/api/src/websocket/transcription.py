@@ -1,6 +1,8 @@
 import socketio
-from google.cloud import speech
+from google.cloud import speech_v2
 import asyncio
+import logging
+from src.settings.env import get_env_value
 
 # Setup socket.io
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins=[])
@@ -9,6 +11,8 @@ app_socketio = socketio.ASGIApp(sio)
 # アクティブなストリームハンドラを保持
 stream_handlers = {}
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 @sio.event
 async def connect(sid, environ):
@@ -67,31 +71,46 @@ class AudioStreamHandler:
     async def initialize_client(self):
         """SpeechClientの初期化と設定"""
         if not hasattr(self, 'client') or self.client is None:
-            self.client = speech.SpeechAsyncClient()
-            self.streaming_config = speech.StreamingRecognitionConfig(
-                config=speech.RecognitionConfig(
-                    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-                    sample_rate_hertz=16000,
-                    language_code='ja-JP',
-                    enable_automatic_punctuation=True,
+            self.client = speech_v2.SpeechAsyncClient()
+            self.streaming_config = speech_v2.types.StreamingRecognitionConfig(
+                config=speech_v2.types.RecognitionConfig(
+                    auto_decoding_config=speech_v2.types.AutoDetectDecodingConfig(),
+                    language_codes=["ja-JP"],
+                    model="long",
                 ),
-                interim_results=True,
             )
 
     async def process_queue(self):
         """音声キューを処理する"""
         current_stream_id = self._stream_id
-        yield speech.StreamingRecognizeRequest(streaming_config=self.streaming_config)
+        project = get_env_value("GOOGLE_CLOUD_PROJECT")
+        logger.info(f"Starting streaming recognition with project: {project}")
+        
+        try:
+            request = speech_v2.types.StreamingRecognizeRequest(
+                recognizer=f'projects/{project}/locations/global/recognizers/_',
+                streaming_config=self.streaming_config
+            )
+            logger.debug(f"Initial request config: {request}")
+            yield request
 
-        while self._is_streaming and self._stream_id == current_stream_id:
-            try:
-                data = await self.queue.get()
-                audio_content = data["audio"]
-                yield speech.StreamingRecognizeRequest(audio_content=audio_content)
-                self.queue.task_done()
-            except Exception as e:
-                print(f"Error in process_queue: {e}")
-                break
+            while self._is_streaming and self._stream_id == current_stream_id:
+                try:
+                    data = await self.queue.get()
+                    audio_content = data["audio"]
+                    logger.debug(f"Received audio chunk, size: {len(audio_content)} bytes")
+                    
+                    request = speech_v2.types.StreamingRecognizeRequest(audio=audio_content)
+                    logger.debug("Sending audio chunk to Google Speech-to-Text")
+                    yield request
+                    
+                    self.queue.task_done()
+                except Exception as e:
+                    logger.error(f"Error in process_queue while processing audio: {str(e)}", exc_info=True)
+                    continue
+        except Exception as e:
+            logger.error(f"Fatal error in process_queue: {str(e)}", exc_info=True)
+            raise
 
     async def start_stream(self):
         """音声認識を実行し結果を処理する"""
@@ -128,7 +147,7 @@ class AudioStreamHandler:
                         return
 
         except Exception as e:
-            print(f"Error in start_stream: {e}")
+            logger.error(f"Error in start_stream: {str(e)}", exc_info=True)
             if self._stream_id == current_stream_id:  # 現在のストリームでエラーが発生した場合のみ再起動
                 await self.cleanup_stream()
 
@@ -167,3 +186,30 @@ class AudioStreamHandler:
         self._cleanup_event.clear()  # イベントをリセット
         await self.cleanup_stream()
         await self._cleanup_event.wait()  # クリーンアップの完了を待機
+
+    async def handle_responses(self, responses):
+        """音声認識の結果を処理する"""
+        try:
+            logger.info("Starting to handle responses from Google Speech-to-Text")
+            async for response in responses:
+                logger.debug(f"Received response: {response}")
+                if not response.results:
+                    logger.debug("No results in response")
+                    continue
+
+                for result in response.results:
+                    if result.alternatives:
+                        transcript = result.alternatives[0].transcript
+                        is_final = result.is_final
+                        logger.info(f"Transcript received - {'FINAL' if is_final else 'INTERIM'}: {transcript}")
+                        
+                        await sio.emit(
+                            "transcript",
+                            {
+                                "transcript": transcript,
+                                "is_final": is_final
+                            },
+                            room=self.sid
+                        )
+        except Exception as e:
+            logger.error(f"Error in handle_responses: {str(e)}", exc_info=True)
