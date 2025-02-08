@@ -93,7 +93,7 @@ class AudioStreamHandler:
                 print(f"Error in process_queue: {e}")
                 break
 
-    async def handle_queue(self):
+    async def start_stream(self):
         """音声認識を実行し結果を処理する"""
         current_stream_id = self._stream_id
         try:
