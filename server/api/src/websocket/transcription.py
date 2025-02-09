@@ -93,7 +93,6 @@ class AudioStreamHandler:
         """音声キューを処理する"""
         current_stream_id = self._stream_id
         project = get_env_value("GOOGLE_CLOUD_PROJECT")
-        logger.info(f"Starting streaming recognition with project: {project}")
 
         try:
             config_request = speech_v2.types.StreamingRecognizeRequest(
@@ -143,8 +142,6 @@ class AudioStreamHandler:
 
                     transcription = result.alternatives[0].transcript
                     is_final = result.is_final
-
-                    logger.info(f"Received transcript: {transcription} - FINAL: {is_final}")
 
                     await sio.emit(
                         "receive_audio_text",
