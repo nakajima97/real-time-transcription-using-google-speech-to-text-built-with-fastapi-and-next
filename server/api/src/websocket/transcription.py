@@ -74,6 +74,7 @@ class AudioStreamHandler:
             self.client = speech_v2.SpeechAsyncClient()
             self.streaming_config = speech_v2.types.StreamingRecognitionConfig(
                 config=speech_v2.types.RecognitionConfig(
+                    # 自動で音声を解析する設定があるが、対応していないエンコーディングを使うので使わない
                     # auto_decoding_config=speech_v2.types.AutoDetectDecodingConfig(),
                     explicit_decoding_config=speech_v2.types.ExplicitDecodingConfig(
                         encoding=speech_v2.types.ExplicitDecodingConfig.AudioEncoding.LINEAR16,
@@ -81,7 +82,7 @@ class AudioStreamHandler:
                         audio_channel_count=1
                     ),
                     language_codes=["ja-JP"],
-                    model="long",
+                    model="latest_long",
                 ),
             )
 
@@ -197,7 +198,6 @@ class AudioStreamHandler:
     async def handle_responses(self, responses):
         """音声認識の結果を処理する"""
         try:
-            logger.info("Starting to handle responses from Google Speech-to-Text")
             async for response in responses:
                 if not response.results:
                     continue
@@ -206,7 +206,6 @@ class AudioStreamHandler:
                     if result.alternatives:
                         transcript = result.alternatives[0].transcript
                         is_final = result.is_final
-                        logger.info(f"Transcript received - {'FINAL' if is_final else 'INTERIM'}: {transcript}")
 
                         await sio.emit(
                             "transcript",
