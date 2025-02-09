@@ -11,7 +11,7 @@ app_socketio = socketio.ASGIApp(sio)
 # アクティブなストリームハンドラを保持
 stream_handlers = {}
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @sio.event
@@ -96,17 +96,14 @@ class AudioStreamHandler:
                 recognizer=f'projects/{project}/locations/global/recognizers/_',
                 streaming_config=self.streaming_config
             )
-            logger.debug(f"Initial request config: {config_request}")
             yield config_request
 
             while self._is_streaming and self._stream_id == current_stream_id:
                 try:
                     data = await self.queue.get()
                     audio_content = data["audio"]
-                    logger.debug(f"Received audio chunk, size: {len(audio_content)} bytes")
 
                     request = speech_v2.types.StreamingRecognizeRequest(audio=audio_content)
-                    logger.debug("Sending audio chunk to Google Speech-to-Text")
                     yield request
 
                     self.queue.task_done()
@@ -120,20 +117,17 @@ class AudioStreamHandler:
     async def start_stream(self):
         """音声認識を実行し結果を処理する"""
         current_stream_id = self._stream_id
-        logger.info(f"Starting streaming recognition for stream ID: {current_stream_id}")
+        logger.info(f"Starting new transcription stream (ID: {current_stream_id})")
         try:
             await self.initialize_client()
-            logger.info("Client initialized")
             stream = await self.client.streaming_recognize(
                 requests=self.process_queue()
             )
-            logger.info("streaming_recognize call initiated successfully")
-            logger.debug(f"Stream object type: {type(stream)}")
 
             async for response in stream:
-                logger.debug(f"Received response: {response}")
                 # ストリームIDが変更された場合は処理を終了
                 if self._stream_id != current_stream_id:
+                    logger.info(f"Stream {current_stream_id} was terminated due to new stream request")
                     break
 
                 if not response.results:
@@ -155,6 +149,7 @@ class AudioStreamHandler:
                     )
 
                     if is_final:
+                        logger.info(f"Final transcription received for stream {current_stream_id}")
                         await self.restart_stream()
                         return
 
@@ -204,9 +199,7 @@ class AudioStreamHandler:
         try:
             logger.info("Starting to handle responses from Google Speech-to-Text")
             async for response in responses:
-                logger.debug(f"Received response: {response}")
                 if not response.results:
-                    logger.debug("No results in response")
                     continue
 
                 for result in response.results:
