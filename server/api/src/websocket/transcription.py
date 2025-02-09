@@ -90,7 +90,7 @@ class AudioStreamHandler:
         current_stream_id = self._stream_id
         project = get_env_value("GOOGLE_CLOUD_PROJECT")
         logger.info(f"Starting streaming recognition with project: {project}")
-        
+
         try:
             config_request = speech_v2.types.StreamingRecognizeRequest(
                 recognizer=f'projects/{project}/locations/global/recognizers/_',
@@ -104,11 +104,11 @@ class AudioStreamHandler:
                     data = await self.queue.get()
                     audio_content = data["audio"]
                     logger.debug(f"Received audio chunk, size: {len(audio_content)} bytes")
-                    
+
                     request = speech_v2.types.StreamingRecognizeRequest(audio=audio_content)
                     logger.debug("Sending audio chunk to Google Speech-to-Text")
                     yield request
-                    
+
                     self.queue.task_done()
                 except Exception as e:
                     logger.error(f"Error in process_queue while processing audio: {str(e)}", exc_info=True)
@@ -168,7 +168,7 @@ class AudioStreamHandler:
         self._stream_id += 1
         self._cleanup_event.clear()  # イベントをリセット
         await self.cleanup_stream()
-        
+
         if self._is_streaming:
             await self._cleanup_event.wait()  # クリーンアップの完了を待機
             await self.create_new_stream()
@@ -214,7 +214,7 @@ class AudioStreamHandler:
                         transcript = result.alternatives[0].transcript
                         is_final = result.is_final
                         logger.info(f"Transcript received - {'FINAL' if is_final else 'INTERIM'}: {transcript}")
-                        
+
                         await sio.emit(
                             "transcript",
                             {
