@@ -84,6 +84,9 @@ class AudioStreamHandler:
                     language_codes=["ja-JP"],
                     model="latest_long",
                 ),
+                streaming_features=speech_v2.types.StreamingRecognitionFeatures(
+                    interim_results=True
+                )
             )
 
     async def process_queue(self):
