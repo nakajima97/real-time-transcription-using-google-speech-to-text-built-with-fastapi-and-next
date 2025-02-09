@@ -74,7 +74,12 @@ class AudioStreamHandler:
             self.client = speech_v2.SpeechAsyncClient()
             self.streaming_config = speech_v2.types.StreamingRecognitionConfig(
                 config=speech_v2.types.RecognitionConfig(
-                    auto_decoding_config=speech_v2.types.AutoDetectDecodingConfig(),
+                    # auto_decoding_config=speech_v2.types.AutoDetectDecodingConfig(),
+                    explicit_decoding_config=speech_v2.types.ExplicitDecodingConfig(
+                        encoding=speech_v2.types.ExplicitDecodingConfig.AudioEncoding.LINEAR16,
+                        sample_rate_hertz=16000,
+                        audio_channel_count=1
+                    ),
                     language_codes=["ja-JP"],
                     model="long",
                 ),
@@ -87,12 +92,12 @@ class AudioStreamHandler:
         logger.info(f"Starting streaming recognition with project: {project}")
         
         try:
-            request = speech_v2.types.StreamingRecognizeRequest(
+            config_request = speech_v2.types.StreamingRecognizeRequest(
                 recognizer=f'projects/{project}/locations/global/recognizers/_',
                 streaming_config=self.streaming_config
             )
-            logger.debug(f"Initial request config: {request}")
-            yield request
+            logger.debug(f"Initial request config: {config_request}")
+            yield config_request
 
             while self._is_streaming and self._stream_id == current_stream_id:
                 try:
@@ -115,13 +120,18 @@ class AudioStreamHandler:
     async def start_stream(self):
         """音声認識を実行し結果を処理する"""
         current_stream_id = self._stream_id
+        logger.info(f"Starting streaming recognition for stream ID: {current_stream_id}")
         try:
             await self.initialize_client()
+            logger.info("Client initialized")
             stream = await self.client.streaming_recognize(
                 requests=self.process_queue()
             )
+            logger.info("streaming_recognize call initiated successfully")
+            logger.debug(f"Stream object type: {type(stream)}")
 
             async for response in stream:
+                logger.debug(f"Received response: {response}")
                 # ストリームIDが変更された場合は処理を終了
                 if self._stream_id != current_stream_id:
                     break
@@ -135,6 +145,8 @@ class AudioStreamHandler:
 
                     transcription = result.alternatives[0].transcript
                     is_final = result.is_final
+
+                    logger.info(f"Received transcript: {transcription} - FINAL: {is_final}")
 
                     await sio.emit(
                         "receive_audio_text",
