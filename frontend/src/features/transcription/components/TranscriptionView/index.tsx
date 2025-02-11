@@ -67,6 +67,8 @@ export const TranscriptionView = ({
             {recognitionHistory.length > 0
               ? [...recognitionHistory]
                   .reverse()
+                  // 一度書き込まれた文字列が変更されることはないためkeyにindexを使っている
+                  // biome-ignore lint:lint/suspicious/noArrayIndexKey
                   .map((text, index) => <p key={index}>{text}</p>)
               : !currentRecognition && (
                   <p className="text-gray-400">
