@@ -14,6 +14,7 @@ stream_handlers = {}
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @sio.event
 async def connect(sid, environ):
     """socketioのconnectイベント"""
@@ -70,7 +71,7 @@ class AudioStreamHandler:
 
     async def initialize_client(self):
         """SpeechClientの初期化と設定"""
-        if not hasattr(self, 'client') or self.client is None:
+        if not hasattr(self, "client") or self.client is None:
             self.client = speech_v2.SpeechAsyncClient()
             self.streaming_config = speech_v2.types.StreamingRecognitionConfig(
                 config=speech_v2.types.RecognitionConfig(
@@ -79,14 +80,14 @@ class AudioStreamHandler:
                     explicit_decoding_config=speech_v2.types.ExplicitDecodingConfig(
                         encoding=speech_v2.types.ExplicitDecodingConfig.AudioEncoding.LINEAR16,
                         sample_rate_hertz=16000,
-                        audio_channel_count=1
+                        audio_channel_count=1,
                     ),
                     language_codes=["ja-JP"],
                     model="latest_long",
                 ),
                 streaming_features=speech_v2.types.StreamingRecognitionFeatures(
                     interim_results=True
-                )
+                ),
             )
 
     async def process_queue(self):
@@ -96,8 +97,8 @@ class AudioStreamHandler:
 
         try:
             config_request = speech_v2.types.StreamingRecognizeRequest(
-                recognizer=f'projects/{project}/locations/global/recognizers/_',
-                streaming_config=self.streaming_config
+                recognizer=f"projects/{project}/locations/global/recognizers/_",
+                streaming_config=self.streaming_config,
             )
             yield config_request
 
@@ -106,12 +107,17 @@ class AudioStreamHandler:
                     data = await self.queue.get()
                     audio_content = data["audio"]
 
-                    request = speech_v2.types.StreamingRecognizeRequest(audio=audio_content)
+                    request = speech_v2.types.StreamingRecognizeRequest(
+                        audio=audio_content
+                    )
                     yield request
 
                     self.queue.task_done()
                 except Exception as e:
-                    logger.error(f"Error in process_queue while processing audio: {str(e)}", exc_info=True)
+                    logger.error(
+                        f"Error in process_queue while processing audio: {str(e)}",
+                        exc_info=True,
+                    )
                     continue
         except Exception as e:
             logger.error(f"Fatal error in process_queue: {str(e)}", exc_info=True)
@@ -130,7 +136,9 @@ class AudioStreamHandler:
             async for response in stream:
                 # ストリームIDが変更された場合は処理を終了
                 if self._stream_id != current_stream_id:
-                    logger.info(f"Stream {current_stream_id} was terminated due to new stream request")
+                    logger.info(
+                        f"Stream {current_stream_id} was terminated due to new stream request"
+                    )
                     break
 
                 if not response.results:
@@ -150,13 +158,17 @@ class AudioStreamHandler:
                     )
 
                     if is_final:
-                        logger.info(f"Final transcription received for stream {current_stream_id}")
+                        logger.info(
+                            f"Final transcription received for stream {current_stream_id}"
+                        )
                         await self.restart_stream()
                         return
 
         except Exception as e:
             logger.error(f"Error in start_stream: {str(e)}", exc_info=True)
-            if self._stream_id == current_stream_id:  # 現在のストリームでエラーが発生した場合のみ再起動
+            if (
+                self._stream_id == current_stream_id
+            ):  # 現在のストリームでエラーが発生した場合のみ再起動
                 await self.cleanup_stream()
 
     async def restart_stream(self):
@@ -209,11 +221,8 @@ class AudioStreamHandler:
 
                         await sio.emit(
                             "transcript",
-                            {
-                                "transcript": transcript,
-                                "is_final": is_final
-                            },
-                            room=self.sid
+                            {"transcript": transcript, "is_final": is_final},
+                            room=self.sid,
                         )
         except Exception as e:
             logger.error(f"Error in handle_responses: {str(e)}", exc_info=True)

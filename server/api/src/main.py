@@ -9,8 +9,10 @@ load_env()
 app = FastAPI()
 add_cors_middleware(app)
 
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
 
 app.mount("/socket.io", app_socketio)
