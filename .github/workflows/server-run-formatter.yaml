@@ -1,0 +1,25 @@
+on: [pull_request]
+
+jobs:
+  run-formatter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server/api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.12.2
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.12.2
+
+      - name: Install poetry
+        run: |
+          pip install uv
+          uv sync --frozen --no-install-project --no-dev
+
+      - name: Run Formatter
+        run: |
+          uv run ruff format --check
